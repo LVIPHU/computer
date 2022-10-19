@@ -1,11 +1,22 @@
 package com.example.servercomputer.api;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 
+import com.example.servercomputer.entity.Category;
+import com.example.servercomputer.entity.Product;
+import com.example.servercomputer.repository.CategoryRepository;
+import com.example.servercomputer.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,6 +41,10 @@ public class ProductAPI {
 	private final int PAGE_SIZE = 6;
 	private final int RELATED_SIZE = 4;
 
+	@Autowired
+	private ProductRepository productRepository;
+	@Autowired
+	private CategoryRepository categoryRepo;
 	@GetMapping
 	public Page<ProductDTO> getPageProduct(@RequestParam(value = "page", required = false) Integer pageNumber){
 		if(pageNumber == null || pageNumber==0) pageNumber=1;
@@ -61,7 +76,37 @@ public class ProductAPI {
 		if(page ==null) page=1;
 		return productService.findByCategory(id, page, PAGE_SIZE);
 	}
-	
+	@GetMapping("/getbycategory")
+	public ResponseEntity<Map<String, Object>> getAllTutorials(
+			@RequestParam("categoryId") Long categoryId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "3") int size
+	) {
+
+		try {
+			Category category = categoryRepo.findById(categoryId).orElseThrow(()->new IllegalStateException("Not found category"));
+			List<Product> tutorials = new ArrayList<Product>();
+			Pageable paging = PageRequest.of(page, size);
+
+			Page<Product> pageTuts;
+			if (categoryId == null)
+				pageTuts = productRepository.findAll(paging);
+			else
+				pageTuts = productRepository.findByCategory(category, paging);
+
+			tutorials = pageTuts.getContent();
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", tutorials);
+			response.put("currentPage", pageTuts.getNumber());
+			response.put("totalItems", pageTuts.getTotalElements());
+			response.put("totalPages", pageTuts.getTotalPages());
+
+			return new ResponseEntity<>(response, HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	@GetMapping("/relate")
 	public List<ProductDTO> getRelateProduct(
 			@RequestParam("categoryId") Long id) {
