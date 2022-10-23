@@ -63,6 +63,33 @@ public class ProductAPI {
 	public List<ProductDTO> getAllList(){
 		return productService.findAllProduct();
 	}
+	@CrossOrigin(origins = "http://localhost:8080")
+	@GetMapping("/getallproduct")
+	public ResponseEntity<Map<String, Object>> getAllProduct(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "3") int size
+	) {
+
+		try {
+			List<Product> tutorials = new ArrayList<Product>();
+			Pageable paging = PageRequest.of(page, size);
+
+			Page<Product> pageTuts;
+			pageTuts = productRepository.findAll(paging);
+			tutorials = pageTuts.getContent();
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("data", tutorials);
+			response.put("currentPage", pageTuts.getNumber());
+			response.put("totalItems", pageTuts.getTotalElements());
+			response.put("totalPages", pageTuts.getTotalPages());
+
+			return new ResponseEntity<>(response, HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	
 	@GetMapping("/{id}")
 	public ProductDTO getById(@PathVariable Long id) {
@@ -77,7 +104,7 @@ public class ProductAPI {
 		return productService.findByCategory(id, page, PAGE_SIZE);
 	}
 	@GetMapping("/getbycategory")
-	public ResponseEntity<Map<String, Object>> getAllTutorials(
+	public ResponseEntity<Map<String, Object>> getProductByCategory(
 			@RequestParam("categoryId") Long categoryId,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "3") int size
