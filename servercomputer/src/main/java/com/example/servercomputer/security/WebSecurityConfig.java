@@ -59,6 +59,8 @@ public class WebSecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests().antMatchers("/","/products","/api/auth/**").permitAll()
                 .antMatchers("/api/product/**").permitAll()
+                .antMatchers("/api/upload/**").permitAll()
+                .antMatchers("/api/cart/**").permitAll()
                 .anyRequest().authenticated();
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 //        http.cors().and().csrf().disable()
