@@ -8,15 +8,19 @@ import com.example.servercomputer.repository.RoleRepository;
 import com.example.servercomputer.repository.UserRepository;
 import com.example.servercomputer.response.JwtTokenResponse;
 import com.example.servercomputer.response.MessageResponse;
+import com.example.servercomputer.security.jwt.AuthTokenFilter;
 import com.example.servercomputer.security.jwt.JwtUtils;
 import com.example.servercomputer.service.impl.MyUserDetails;
+import com.example.servercomputer.utils.ResponseUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,8 +47,11 @@ public class AuthController {
     @Autowired
     PasswordEncoder encoder;
     @Autowired
+    private AuthTokenFilter jwtFilter;
+    @Autowired
     JwtUtils jwtUtils;
-
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser( @RequestBody LoginRequest loginRequest) {
         try {
@@ -61,7 +69,7 @@ public class AuthController {
                     userDetails.getUsername(),
                     roles));
         }catch (Exception e){
-            return ResponseEntity.ok(new MessageResponse("User login no success!"));
+            return new ResponseEntity<>(new MessageResponse("User login no success!"), HttpStatus.UNAUTHORIZED);
         }
     }
     @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -101,5 +109,24 @@ public class AuthController {
         userRepository.save(u);
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
-
+    @PostMapping("/changePassword")
+    ResponseEntity<String> changePassword(@RequestBody Map<String, String> requestMap){
+        BCryptPasswordEncoder encoder1=new BCryptPasswordEncoder();
+        try {
+            User userObj=userRepository.findByEmail(jwtFilter.getCurrentUser()).get();
+            if (!userObj.equals(null)){
+                if (encoder1.matches(requestMap.get("oldPassword"), userObj.getPassword())){
+                    userObj.setPassword(passwordEncoder.encode(requestMap.get("newPassword")));
+                    userRepository.save(userObj);
+                    return ResponseUtils.getResponseEntity("Password update success", HttpStatus.OK);
+                }
+                return ResponseUtils.getResponseEntity("Incorrect old password", HttpStatus.BAD_REQUEST);
+            }
+            return ResponseUtils.getResponseEntity("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return ResponseUtils.getResponseEntity("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
