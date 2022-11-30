@@ -27,10 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -123,6 +120,45 @@ public class AuthController {
                 return ResponseUtils.getResponseEntity("Incorrect old password", HttpStatus.BAD_REQUEST);
             }
             return ResponseUtils.getResponseEntity("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return ResponseUtils.getResponseEntity("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @PostMapping("/changePasswordMail")
+    ResponseEntity<String> changePasswordMail(@RequestBody Map<String, String> requestMap){
+        BCryptPasswordEncoder encoder1=new BCryptPasswordEncoder();
+        try {
+            User userObj=userRepository.findByEmail(jwtFilter.getCurrentUser()).get();
+            if (!userObj.equals(null)){
+//                if (encoder1.matches(requestMap.get("oldPassword"), userObj.getPassword())){
+//                    userObj.setPassword(passwordEncoder.encode(requestMap.get("newPassword")));
+//                    userRepository.save(userObj);
+//                    return ResponseUtils.getResponseEntity("Password update success", HttpStatus.OK);
+//                }
+                if (requestMap.get("oldPassword").equals(userObj.getPassword())){
+                    userObj.setPassword(passwordEncoder.encode(requestMap.get("newPassword")));
+                    userRepository.save(userObj);
+                    return ResponseUtils.getResponseEntity("Password update success", HttpStatus.OK);
+                }
+                return ResponseUtils.getResponseEntity("Incorrect old password", HttpStatus.BAD_REQUEST);
+            }
+            return ResponseUtils.getResponseEntity("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return ResponseUtils.getResponseEntity("something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @PostMapping("/forgotPassword")
+    ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> requestMap){
+        try {
+            User user=userRepository.findByEmail(requestMap.get("email")).get();
+//            if(!Objects.isNull(user) && !Strings.isNullOrEmpty(user.getEmail()))
+//                emailUtils.forgotMail(user.getEmail(),
+//                        "credentials by computer system", user.getPassword());
+                return ResponseUtils.getResponseEntity("Check your mail", HttpStatus.OK);
         }
         catch (Exception e){
             e.printStackTrace();

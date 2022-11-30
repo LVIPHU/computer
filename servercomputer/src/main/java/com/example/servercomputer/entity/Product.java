@@ -1,15 +1,9 @@
 package com.example.servercomputer.entity;
 
 import java.io.Serializable;
+import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 
 import lombok.Data;
@@ -26,7 +20,7 @@ public class Product implements Serializable{
 	private String name;
 	private String description;
 	@Column(nullable = false)
-	private Double price;
+	private Float price;
 	private Integer quantity;
 	@Lob
     @Column(columnDefinition="MEDIUMBLOB")
@@ -34,4 +28,6 @@ public class Product implements Serializable{
 	@ManyToOne
 	@JoinColumn(referencedColumnName = "id", nullable = false)
 	private Category category;
+	@OneToMany(fetch = FetchType.LAZY)
+	private Set<DetailOrder> detailOrders;
 }
