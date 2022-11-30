@@ -116,9 +116,9 @@ public class DetailOrderController {
     }
 
     // restore quantity tra so luong cu cua product khi cancel hoac huy order
-    @PutMapping("/odetail/qty/{product_id}")
+    @PutMapping("/odetail/qty/{detail_id}")
     //http://localhost:8081/api/detailorder/odetail/qty/1
-    public ResponseEntity<ResponseDTO> restoreQty(@PathVariable(value = "product_id") Long productId) throws UpdateDataFail {
+    public ResponseEntity<ResponseDTO> restoreQty(@PathVariable(value = "detail_id") Long productId) throws UpdateDataFail {
         ResponseDTO responseDTO = new ResponseDTO();
         try {
             DetailOrderDTO updateDetail = detailService.restoreQty(productId);
